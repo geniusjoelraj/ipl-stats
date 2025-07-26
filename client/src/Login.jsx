@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
@@ -24,7 +23,17 @@ function Login() {
       if (!res.ok) throw new Error((await res.json()).error || "Login failed");
 
       const data = await res.json();
-      navigate("/profile", { state: { user: data } }); // ⬅ pass user data
+
+      // Store authentication token (adjust based on your API response structure)
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+      } else {
+        // If your API doesn't return a token, you might need to create one
+        // or store user credentials (less secure)
+        localStorage.setItem('userCredentials', JSON.stringify(form));
+      }
+
+      navigate("/profile", { state: { user: data } });
     } catch (err) {
       setError(err.message);
     }

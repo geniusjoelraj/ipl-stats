@@ -1,25 +1,158 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function Profile() {
   const location = useLocation();
   const navigate = useNavigate();
-  const user = location.state?.user;
-  console.log(user)
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   useEffect(() => {
-    if (!user) {
-      navigate("/");
+    // Check if user data came from navigation state
+    if (location.state?.user) {
+      setUser(location.state.user);
+      // Store user data in localStorage for refresh persistence
+      localStorage.setItem('userData', JSON.stringify(location.state.user));
+      setLoading(false);
+    } else {
+      // Try to get user data from localStorage (for refresh)
+      const storedUserData = localStorage.getItem('userData');
+      const storedCredentials = localStorage.getItem('userCredentials');
+
+      if (storedUserData) {
+        setUser(JSON.parse(storedUserData));
+        setLoading(false);
+      } else if (storedCredentials) {
+        // Re-authenticate using stored credentials
+        reAuthenticate(JSON.parse(storedCredentials));
+      } else {
+        // No data available, redirect to login
+        navigate("/");
+      }
     }
-  }, [user, navigate]);
+  }, [location.state, navigate]);
 
-  if (!user) return null;
+  const reAuthenticate = async (credentials) => {
+    try {
+      setLoading(true);
+      setError("");
 
+      const res = await fetch("http://localhost:3000/nam", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
 
+      if (!res.ok) {
+        throw new Error((await res.json()).error || "Re-authentication failed");
+      }
+
+      const userData = await res.json();
+      setUser(userData);
+      localStorage.setItem('userData', JSON.stringify(userData));
+    } catch (err) {
+      console.error("Re-authentication error:", err);
+      setError(err.message);
+      // Clear invalid data and redirect
+      localStorage.removeItem('userData');
+      localStorage.removeItem('userCredentials');
+      navigate("/");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshData = async () => {
+    const storedCredentials = localStorage.getItem('userCredentials');
+
+    if (!storedCredentials) {
+      setError("No credentials available for refresh");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const credentials = JSON.parse(storedCredentials);
+      const res = await fetch("http://localhost:3000/nam", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!res.ok) {
+        throw new Error((await res.json()).error || "Refresh failed");
+      }
+
+      const userData = await res.json();
+      setUser(userData);
+      localStorage.setItem('userData', JSON.stringify(userData));
+    } catch (err) {
+      setError("Refresh failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    localStorage.removeItem('userCredentials');
+    navigate("/");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-xl">Loading profile...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="bg-gray-800 p-8 rounded-xl">
+          <div className="text-red-500 mb-4">Unable to load profile data</div>
+          <button
+            onClick={() => navigate("/")}
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
       <div className="bg-gray-800 p-8 rounded-xl max-w-2xl w-full">
-        <h1 className="text-2xl font-bold mb-4">{user.name}</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">{user.name}</h1>
+          <div className="flex gap-2">
+            <button
+              onClick={refreshData}
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm"
+              disabled={loading}
+            >
+              {loading ? "Refreshing..." : "Refresh Data"}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-400 hover:bg-red-500 px-4 py-2 rounded text-sm"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-600 text-white p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         <h2 className="text-xl font-semibold mb-2">Players</h2>
         <div className="overflow-x-auto">
@@ -64,7 +197,6 @@ function Profile() {
       </div>
     </div>
   );
-
 }
 
 export default Profile;

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
+
+const SERVER_URL = `${import.meta.env.VITE_SERVER_BASE}` //:3000
 function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
@@ -14,7 +17,7 @@ function Login() {
     e.preventDefault();
     setError("");
     try {
-      const res = await fetch("http://localhost:3000/nam", {
+      const res = await fetch(`${SERVER_URL}/nam`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

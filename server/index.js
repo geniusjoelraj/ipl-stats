@@ -2,6 +2,8 @@
 import express, { json } from 'express';
 const app = express();
 const PORT = 3000;
+import dotenv from 'dotenv';
+dotenv.config();
 
 import cors from 'cors';
 
@@ -10,6 +12,8 @@ app.use(json());
 
 // Mock user data
 
+const SERVER_URL=`${import.meta.env.SERVER_URL}` //:3000
+const API_BASE=`${import.meta.env.API_BASE}` //:8080
 
 const users = [
   {
@@ -76,7 +80,7 @@ app.post('/nam', (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
-  fetch('http://localhost:8080/teams')
+  fetch(`${API_BASE}/teams`)
     .then(response => response.json())
     .then(data => {
       const fullUser = data.find(team => team.id === user.id);
@@ -94,5 +98,5 @@ app.post('/nam', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Mock API running on http://localhost:${PORT}`);
+  console.log(`Mock API running on ${SERVER_URL}`);
 });

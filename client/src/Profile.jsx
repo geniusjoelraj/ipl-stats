@@ -1,12 +1,15 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
+const SERVER_URL = `${import.meta.env.VITE_SERVER_BASE}` //:3000
+
 function Profile() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
 function formatToCrores(num) {
     if (typeof num !== 'number' || isNaN(num)) return '';
 
@@ -48,7 +51,7 @@ function formatToCrores(num) {
       setLoading(true);
       setError("");
 
-      const res = await fetch("http://localhost:3000/nam", {
+      const res = await fetch(`${SERVER_URL}/nam`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -86,7 +89,7 @@ function formatToCrores(num) {
       setError("");
 
       const credentials = JSON.parse(storedCredentials);
-      const res = await fetch("http://localhost:3000/nam", {
+      const res = await fetch(`${SERVER_URL}/nam`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),

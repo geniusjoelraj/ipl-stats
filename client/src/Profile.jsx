@@ -7,7 +7,17 @@ function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+function formatToCrores(num) {
+    if (typeof num !== 'number' || isNaN(num)) return '';
 
+    if (num >= 10000000) {
+      return `${(num / 10000000).toFixed(1).replace(/\.0$/, '')}cr`;
+    } else if (num >= 100000) {
+      return `${(num / 100000).toFixed(1).replace(/\.0$/, '')}L`;
+    }
+
+    return num.toLocaleString('en-IN');
+  }
   useEffect(() => {
     // Check if user data came from navigation state
     if (location.state?.user) {
@@ -129,19 +139,19 @@ function Profile() {
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
       <div className="bg-gray-800 p-8 rounded-xl max-w-2xl w-full">
-        <div className="flex justify-between items-center mb-4">
+       <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">{user.name}</h1>
           <div className="flex gap-2">
             <button
               onClick={refreshData}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm"
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm cursor-pointer"
               disabled={loading}
             >
               {loading ? "Refreshing..." : "Refresh Data"}
             </button>
             <button
               onClick={handleLogout}
-              className="bg-red-400 hover:bg-red-500 px-4 py-2 rounded text-sm"
+              className="bg-red-400 hover:bg-red-500 px-4 py-2 rounded text-sm cursor-pointer"
             >
               Logout
             </button>
@@ -166,6 +176,7 @@ function Profile() {
               </tr>
             </thead>
 
+            {console.log(user.balance)}
             <tbody>
               {(user.batsmanDTOList || []).map((player) => (
                 <tr key={`batsman-${player.id}`} className="border-b border-gray-700 hover:bg-gray-700">
@@ -194,6 +205,11 @@ function Profile() {
             </tbody>
           </table>
         </div>
+        <div className="flex flex-row justify-around mt-10">
+        <div className="text-2xl text-white text-center font-semibold">Balance: <span className="text-red-500">₹{formatToCrores(user.balance)}</span></div>
+        <div className="text-2xl text-white text-center font-semibold">Total: <span className="text-yellow-300">₹{formatToCrores(1000000000-user.balance)}</span></div>
+        </div>
+ 
       </div>
     </div>
   );
